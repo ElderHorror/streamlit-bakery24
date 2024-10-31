@@ -1,8 +1,9 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
-# Custom CSS for styling (if needed)
+# Custom CSS for styling
 style = """
   <style>
       .metric-container {
@@ -16,27 +17,37 @@ st.markdown(style, unsafe_allow_html=True)
 def load_data():
     file = "bakerysales.csv"
     df = pd.read_csv(file)
-    
+
     # Rename columns for clarity
-    df.rename(columns={
-        "Unnamed: 0": "id", 
-        "article": "product",
-        "Quantity": "quantity"
-    }, inplace=True)
-    
+    df.rename(columns={"Unnamed: 0": "id", "article": "product", "Quantity": "quantity"}, inplace=True)
+
     # Clean unit_price data
-    df.unit_price = df.unit_price.str.replace(",", ".").str.replace("€", "").str.strip().astype("float")
-    
+    df.unit_price = df.unit_price.str.replace(",", ".").str.replace("€", "").str.strip().astype(float)
+
     # Calculate sales
     df["sales"] = df.quantity * df.unit_price
-    
+
     # Drop rows with zero sales
     df.drop(df[df.sales == 0].index, inplace=True)
 
     # Convert date column to datetime format
     df["date"] = pd.to_datetime(df.date)
-    
+
     return df
+
+# Function to create pie chart and display it using Streamlit
+def pie_chart(data):
+    plt.figure(figsize=(8, 6))
+    wedges, texts, autotexts = plt.pie(data, labels=data.index, autopct='%1.1f%%', startangle=90, shadow=False)
+    for text in texts:
+        text.set_color('white')
+    for autotext in autotexts:
+        autotext.set_color('white')
+    plt.title('Sales Distribution by Product', pad=20, color='white')
+    plt.axis('equal')  # Equal aspect ratio ensures that pie chart is circular.
+    plt.gcf().patch.set_facecolor('none')  # Set the figure background to transparent
+    st.pyplot(plt)
+    plt.close()  # Close the figure to avoid display issues
 
 # Load the dataset
 df = load_data()
@@ -72,11 +83,33 @@ display_metrics(filtered_table)
 # Display filtered table
 if not filtered_table.empty:
     st.dataframe(filtered_table[["date", "product", "quantity", "unit_price", "sales"]])
-    
+
     # Visualize total sales by selected products
     st.write("## Total Sales of Selected Products")
     total_sales_by_product = filtered_table.groupby(['product'])["sales"].sum().sort_values(ascending=True)
     st.bar_chart(total_sales_by_product)
+
+    # Sales Distribution Over Time
+    st.write("## Sales Over Time")
+    sales_over_time = filtered_table.groupby("date")["sales"].sum()
+    st.line_chart(sales_over_time)
+
+    # Top Products by Sales
+    st.write("## Top Products by Sales")
+    top_products = filtered_table.groupby("product")["sales"].sum().sort_values(ascending=False).head(10)
+    st.bar_chart(top_products)
+
+    # Monthly Sales Summary
+    st.write("## Monthly Sales Summary")
+    filtered_table['month'] = filtered_table['date'].dt.to_period('M')  # Convert dates to monthly periods
+    monthly_sales = filtered_table.groupby('month')['sales'].sum()  # Aggregate monthly sales
+    monthly_sales.index = monthly_sales.index.astype(str)  # Convert PeriodIndex to string for display
+    st.bar_chart(monthly_sales)  # Display monthly sales summary
+
+    # Pie Chart for Product Distribution
+    st.write("## Sales Distribution by Product")
+    product_distribution = filtered_table.groupby('product')["sales"].sum()
+    pie_chart(product_distribution)
 else:
     st.warning("No data available for the selected product(s). Please adjust your filters.")
 
