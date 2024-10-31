@@ -1,7 +1,6 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 
 # Custom CSS for styling
 style = """
@@ -34,20 +33,6 @@ def load_data():
     df["date"] = pd.to_datetime(df.date)
 
     return df
-
-# Function to create pie chart and display it using Streamlit
-def pie_chart(data):
-    plt.figure(figsize=(8, 6))
-    wedges, texts, autotexts = plt.pie(data, labels=data.index, autopct='%1.1f%%', startangle=90, shadow=False)
-    for text in texts:
-        text.set_color('white')
-    for autotext in autotexts:
-        autotext.set_color('white')
-    plt.title('Sales Distribution by Product', pad=20, color='white')
-    plt.axis('equal')  # Equal aspect ratio ensures that pie chart is circular.
-    plt.gcf().patch.set_facecolor('none')  # Set the figure background to transparent
-    st.pyplot(plt)
-    plt.close()  # Close the figure to avoid display issues
 
 # Load the dataset
 df = load_data()
@@ -106,10 +91,6 @@ if not filtered_table.empty:
     monthly_sales.index = monthly_sales.index.astype(str)  # Convert PeriodIndex to string for display
     st.bar_chart(monthly_sales)  # Display monthly sales summary
 
-    # Pie Chart for Product Distribution
-    st.write("## Sales Distribution by Product")
-    product_distribution = filtered_table.groupby('product')["sales"].sum()
-    pie_chart(product_distribution)
 else:
     st.warning("No data available for the selected product(s). Please adjust your filters.")
 
