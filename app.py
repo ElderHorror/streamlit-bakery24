@@ -84,12 +84,6 @@ if not filtered_table.empty:
     top_products = filtered_table.groupby("product")["sales"].sum().sort_values(ascending=False).head(10)
     st.bar_chart(top_products)
 
-    # Monthly Sales Summary
-    st.write("## Monthly Sales Summary")
-    filtered_table['month'] = filtered_table['date'].dt.to_period('M')  # Convert dates to monthly periods
-    monthly_sales = filtered_table.groupby('month')['sales'].sum()  # Aggregate monthly sales
-    monthly_sales.index = monthly_sales.index.astype(str)  # Convert PeriodIndex to string for display
-    st.bar_chart(monthly_sales)  # Display monthly sales summary
 
 else:
     st.warning("No data available for the selected product(s). Please adjust your filters.")
